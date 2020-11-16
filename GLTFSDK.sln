@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GLTFSDK", "GLTFSDK\GLTFSDK.vcxproj", "{F656C078-7F2A-4753-9B92-5E959AF80E26}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Deserialize", "GLTFSDK.Samples\Deserialize\Deserialize.vcxproj", "{DE6A7757-2DF3-4705-829B-96A77BABF0B2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Serialize", "GLTFSDK.Samples\Serialize\Serialize.vcxproj", "{DE6A7757-2DE3-4705-829B-96A77BABF0B2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AvnGLBRecoder", "AvnGLBRecoder\AvnGLBRecoder.vcxproj", "{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -98,6 +100,18 @@ Global
 		{DE6A7757-2DE3-4705-829B-96A77BABF0B2}.Release|x64.Build.0 = Release|x64
 		{DE6A7757-2DE3-4705-829B-96A77BABF0B2}.Release|x86.ActiveCfg = Release|Win32
 		{DE6A7757-2DE3-4705-829B-96A77BABF0B2}.Release|x86.Build.0 = Release|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|ARM.ActiveCfg = Debug|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|x64.ActiveCfg = Debug|x64
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|x64.Build.0 = Debug|x64
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|x86.ActiveCfg = Debug|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Debug|x86.Build.0 = Debug|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|ARM.ActiveCfg = Release|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|ARM64.ActiveCfg = Release|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|x64.ActiveCfg = Release|x64
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|x64.Build.0 = Release|x64
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|x86.ActiveCfg = Release|Win32
+		{5013BC1B-FBC9-4E59-A52C-B805C0C16AF4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
