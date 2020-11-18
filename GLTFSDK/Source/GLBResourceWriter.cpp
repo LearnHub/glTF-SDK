@@ -120,3 +120,14 @@ std::ostream* GLBResourceWriter::GetBufferStream(const std::string& bufferId)
 
     return stream;
 }
+
+std::streamoff GLBResourceWriter::GetBufferOffset(const std::string& bufferId) {
+    std::streamoff offset = m_stream->tellp();
+
+    if (bufferId != GLB_BUFFER_ID) {
+        offset = GLTFResourceWriter::GetBufferOffset(bufferId);
+    }
+
+    return offset;
+
+}

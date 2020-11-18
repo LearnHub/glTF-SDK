@@ -23,6 +23,7 @@ namespace Microsoft
             void Flush(const std::string& manifest, const std::string& uri);
             std::string GenerateBufferUri(const std::string& bufferId) const override;
             std::ostream* GetBufferStream(const std::string& bufferId) override;
+            std::streamoff GetBufferOffset(const std::string& bufferId) override;
 
         private:
             std::shared_ptr<std::iostream> m_stream;
