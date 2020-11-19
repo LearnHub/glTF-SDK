@@ -10,6 +10,8 @@
 #include <GLTFSDK/GLBResourceReader.h>
 #include <GLTFSDK/Deserialize.h>
 
+#include "GLBBufMapper.h"
+
 using namespace Microsoft::glTF;
 
 class StreamReader : public IStreamReader {
@@ -43,12 +45,12 @@ private:
     std::filesystem::path m_pathBase;
 };
 
-void RecodeGLB(const std::filesystem::path& glbPath) {
+void RecodeGLB(const std::filesystem::path& glbPath, const std::filesystem::path& glbNew) {
     std::cout << "Processing GLB at - " << glbPath << std::endl;
 
     auto streamReader = std::make_unique<StreamReader>(glbPath.parent_path());
     auto glbStream = streamReader->GetInputStream(glbPath.filename().string()); 
-    auto glbResourceReader = std::make_unique<GLBResourceReader>(std::move(streamReader), std::move(glbStream));
+    auto glbResourceReader = std::make_shared<GLBResourceReader>(std::move(streamReader), std::move(glbStream));
 
     std::string manifest = glbResourceReader->GetJson(); // Get the manifest from the JSON chunk
 
@@ -68,12 +70,22 @@ void RecodeGLB(const std::filesystem::path& glbPath) {
     std::cout << "### GLB Info - " << glbPath.filename() << " ###" << std::endl << std::endl;
     std::cout << "Image count: " << document.images.Size() << ", texture count: " << document.textures.Size() << std::endl;
     std::cout << "Buffer count: " << document.buffers.Size() << ", Buffer views: " << document.bufferViews.Size() << std::endl;
+
+    GLBBufMapper bufMapper(glbResourceReader);
+    bufMapper.LoadDocument(document);
+    bufMapper.RecodeImages(document);
+
+    bufMapper.SaveNewGLB(document, glbNew);
+
 }
 
 int main(int argc, char* argv[])
 {
     try {
-        if (argc != 2U) {
+        std::cout << "Avantis GLB recoder utility..." << std::endl;
+
+        if (argc != 3U) {
+            std::cerr << "Usage: " << argv[0] << " <original glb> <new glb>" << std::endl;
             throw std::runtime_error("Unexpected number of command line arguments");
         }
 
@@ -103,15 +115,21 @@ int main(int argc, char* argv[])
         };
 
         if (pathFileExt == MakePathExt(GLB_EXTENSION)) {
-            RecodeGLB(path);
+            std::filesystem::path newGLB = argv[2U];
+            if (newGLB.is_relative()) {
+                auto pathCurrent = std::filesystem::current_path();
+
+                // Convert the relative path into an absolute path by appending the command line argument to the current path
+                pathCurrent /= newGLB;
+                pathCurrent.swap(newGLB);
+            }
+
+            RecodeGLB(path, newGLB);
         } else {
             std::stringstream ss;
             ss << "Command line argument - " << argv[1U] << " - filename extension must be .glb";
             throw std::runtime_error(ss.str());
         }
-
-        char c;
-        std::cin >> c;
     } catch (const std::runtime_error& ex) {
         std::cerr << "Error! - ";
         std::cerr << ex.what() << "\n";

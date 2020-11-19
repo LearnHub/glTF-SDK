@@ -142,11 +142,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AvnGLBRecoder.cpp" />
+    <ClCompile Include="GLBBufMapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GLTFSDK\GLTFSDK.vcxproj">
       <Project>{f656c078-7f2a-4753-9b92-5e959af80e26}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GLBBufMapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
