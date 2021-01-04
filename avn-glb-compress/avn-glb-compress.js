@@ -14,6 +14,8 @@ const exec = require("child_process");
 const tmpGLTF = "model.gltf"
 const gm = require("gm");
 
+let rescaledImgArray = new Array();
+
 const processAllImages = async function(imgCount)  {
 	var files = fs.readdirSync('.');
 
@@ -29,6 +31,15 @@ const processAllImages = async function(imgCount)  {
 
 	console.log(`Repacking GLB to -> ${options.output}`);
 	exec.execSync(`gltf-pipeline -i ${tmpGLTF} -o ../${options.output}`, {stdio: 'inherit'});
+
+  if (0 < rescaledImgArray.length) {
+    console.log("\n*** WARNING ***");
+    console.log(`Found ${rescaledImgArray.length} texture images requiring re-scale. The files below need re-dimensioning...`);
+    for (let n = 0 ; n < rescaledImgArray.length ; n++) {
+      let fileInfo = rescaledImgArray[n];
+      console.log("\t" + fileInfo);
+    }
+  }
 }
 
 console.log(`Processing GLB - ${options.input} -> ${options.output}`);
@@ -105,7 +116,6 @@ fs.writeFileSync(tmpGLTF, outputJson);
 console.log("");
 processAllImages(imgCount);
 
-
 function isPowerOf2(i) {
 	return (i & (i - 1)) == 0;
 }
@@ -142,12 +152,17 @@ async function processTexture(imgFile) {
 				let newWidth = highestPowerOf2Below(imgSz.width);
 				let newHeight = highestPowerOf2Below(imgSz.height);
 
-				console.log(`MUST RESIZE Texture - "${imgFile}" - width: ${imgSz.width} => ${newWidth}, height: ${imgSz.height} => ${newHeight}`);
+        let fileInfo = `"${imgFile}" - width: ${imgSz.width} => ${newWidth}, height: ${imgSz.height} => ${newHeight}`;
+
+				console.log("MUST RESIZE Texture -- " + fileInfo);
+
+        rescaledImgArray.push(fileInfo);
+
 				await resizeImage(imgFile, newWidth, newHeight);
 			}
 
-			//let basiscmd = `\.\.\\basisu -linear -mipmap -individual -file "${imgFile}"`
-			let basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
+			let basiscmd = `\.\./basisu -linear -mipmap -individual -file "${imgFile}"`
+			//let basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
 			exec.execSync(basiscmd, {stdio: 'inherit'});
 
 			if(err) {
