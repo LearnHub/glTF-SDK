@@ -1,0 +1,19 @@
+{
+  "name": "avn-glb-compress",
+  "version": "1.0.0",
+  "description": "Unpack specified GLB, convert all images to Basis format & repack new GLB",
+  "main": "avn-glb-compress.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Geraint Lloyd",
+  "license": "ISC",
+  "bin": {
+    "avn-glb-compress": "avn-glb-compress.js"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "gm": "^1.23.1",
+    "yargs": "^16.2.0"
+  }
+}
