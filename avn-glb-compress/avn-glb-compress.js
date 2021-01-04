@@ -9,21 +9,24 @@ const options = yargs
  .option("o", { alias: "output", describe: "Output GLB file", type: "string", demandOption: true })
  .option("c", { alias: "compression", describe: "Compression level - full/preview (default)", type: "string"})
  .argv;
- 
-const exec = require("child_process"); 
+
+const exec = require("child_process");
 const tmpGLTF = "model.gltf"
 const gm = require("gm");
 
-const processAllImages = async function()  {
+const processAllImages = async function(imgCount)  {
 	var files = fs.readdirSync('.');
 
+  let n = 1;
 	//files.forEach(async (file) => {
 	for (const file of files) {
 		if (file.endsWith(".jpg") || file.endsWith(".jpeg") || file.endsWith(".png")) {
+      console.log(`Processing Image (${n} of ${imgCount}) - "${file}"`);
 			await processTexture(file);
+      n++;
 		}
 	}
-	
+
 	console.log(`Repacking GLB to -> ${options.output}`);
 	exec.execSync(`gltf-pipeline -i ${tmpGLTF} -o ../${options.output}`, {stdio: 'inherit'});
 }
@@ -50,7 +53,8 @@ console.log(`GLTF refers to ${pngCount} .png(s), ${jpgCount} .jpg(s), ${jpegCoun
 let gltfDoc = JSON.parse(rawdata);
 
 let imgs = gltfDoc["images"];
-console.log(`GLTF contains ${imgs.length} images`);
+let imgCount = imgs.length;
+console.log(`GLTF contains ${imgCount} images`);
 
 imgs.forEach(img => {
 	if (img.uri.endsWith(".jpg") || img.uri.endsWith(".jpeg") || img.uri.endsWith(".png")) {
@@ -61,8 +65,8 @@ imgs.forEach(img => {
 			uri = uri.replace(/\.jpeg$/gi, ".basis");
 		} else if (uri.endsWith(".png")) {
 			uri = uri.replace(/\.png$/gi, ".basis");
-		} 
-		
+		}
+
 		console.log(`Image (${img.mimeType}) URI: "${img.uri}" -> "${uri}"`);
 		img.uri = uri;
 	} else {
@@ -80,7 +84,7 @@ txtrs.forEach(txtr => {
 	var extBasis = new Object();
 	extBasis.source = src;
 	exts.MOZ_HUBS_texture_basis = extBasis;
-	
+
 	txtr.extensions = exts;
 });
 
@@ -99,7 +103,7 @@ fs.writeFileSync(tmpGLTF, outputJson);
 
 // Now convert all the images to the basis format.
 console.log("");
-processAllImages();
+processAllImages(imgCount);
 
 
 function isPowerOf2(i) {
@@ -116,7 +120,7 @@ function highestPowerOf2Below(n) {
 async function resizeImage (f, w, h) {
 	return new Promise ((resolve, reject) => {
 		fs.copyFileSync(f, "original-" + f);
-		
+
 		gm(f)
 		.resize(w, h, '!')
 		.write(f, function(err) {
@@ -137,14 +141,13 @@ async function processTexture(imgFile) {
 			if ( (!isPowerOf2(imgSz.width)) || (!isPowerOf2(imgSz.height)) ) {
 				let newWidth = highestPowerOf2Below(imgSz.width);
 				let newHeight = highestPowerOf2Below(imgSz.height);
-				
+
 				console.log(`MUST RESIZE Texture - "${imgFile}" - width: ${imgSz.width} => ${newWidth}, height: ${imgSz.height} => ${newHeight}`);
 				await resizeImage(imgFile, newWidth, newHeight);
 			}
-			console.log(`Processing Texture Image - "${imgFile}"`);
-			
+
 			//let basiscmd = `\.\.\\basisu -linear -mipmap -individual -file "${imgFile}"`
-			let basiscmd = `\.\.\\basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
+			let basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
 			exec.execSync(basiscmd, {stdio: 'inherit'});
 
 			if(err) {
@@ -153,7 +156,7 @@ async function processTexture(imgFile) {
 			}
 			resolve(imgFile);
 		});
-		
+
 	});
 }
 
