@@ -42,7 +42,11 @@ const processAllImages = async function(imgCount)  {
   }
 }
 
-console.log(`Processing GLB - ${options.input} -> ${options.output}`);
+if (options.compression === "full") {
+  console.log(`Processing GLB with FULL compression- ${options.input} -> ${options.output}`);
+} else {
+  console.log(`Processing GLB with PREVIEW compression- ${options.input} -> ${options.output}`);
+}
 
 let tmpFldr = "temp-" + options.input;
 if (!fs.existsSync(tmpFldr)) {
@@ -161,8 +165,10 @@ async function processTexture(imgFile) {
 				await resizeImage(imgFile, newWidth, newHeight);
 			}
 
-			let basiscmd = `\.\./basisu -linear -mipmap -individual -file "${imgFile}"`
-			//let basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
+      let basiscmd = `\.\./basisu -linear -mipmap -individual -file "${imgFile}"`
+      if (options.compression === "full") {
+		      basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
+      }
 			exec.execSync(basiscmd, {stdio: 'inherit'});
 
 			if(err) {
