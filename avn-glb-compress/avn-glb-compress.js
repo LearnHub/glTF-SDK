@@ -6,9 +6,17 @@ const fs = require("fs");
 const options = yargs
  .usage("Usage: -i <input GLB> -o <output GLB> -c <full|preview>")
  .option("i", { alias: "input", describe: "GLB file to compress", type: "string", demandOption: true })
- .option("o", { alias: "output", describe: "Output GLB file", type: "string", demandOption: true })
+ .option("o", { alias: "output", describe: "Output GLB file", type: "string", demandOption: false })
  .option("c", { alias: "compression", describe: "Compression level - full/preview (default)", type: "string"})
+ .option("r", { alias: "report", describe: "Generate report of resized files", demanOption: false})
  .argv;
+
+let split_input = options.input.split(".")
+if (options.compression === "full") {
+  options.output = split_input[0] + "_compressed_full." + split_input[1]
+} else {	
+  options.output = split_input[0] + "_compressed_preview." + split_input[1]
+}
 
 const exec = require("child_process");
 const tmpGLTF = "model.gltf"
@@ -32,19 +40,30 @@ const processAllImages = async function(imgCount)  {
 	console.log(`Repacking GLB to -> ${options.output}`);
 	exec.execSync(`gltf-pipeline -i ${tmpGLTF} -o ../${options.output}`, {stdio: 'inherit'});
 
+  let resized_files
+  
   if (0 < rescaledImgArray.length) {
     console.log("\n*** WARNING ***");
-    console.log(`Found ${rescaledImgArray.length} texture images requiring re-scale. The files below need re-dimensioning...`);
+    let message = `Found ${rescaledImgArray.length} texture images requiring re-scale. The files below need re-dimensioning...`
+    console.log(message);
+    resized_files = message;
     for (let n = 0 ; n < rescaledImgArray.length ; n++) {
       let fileInfo = rescaledImgArray[n];
       console.log("\t" + fileInfo);
+      resized_files += "\n\t" + fileInfo;
     }
   }
-}
+  if (resized_files && options.report) {
+  	const fs = require('fs')
+  	fs.writeFile('../'+ split_input[0] + '.txt', resized_files, (err) => {
+  	  if (err) throw err;
+  	})
+  }
 
+}
 if (options.compression === "full") {
   console.log(`Processing GLB with FULL compression- ${options.input} -> ${options.output}`);
-} else {
+} else {	
   console.log(`Processing GLB with PREVIEW compression- ${options.input} -> ${options.output}`);
 }
 
