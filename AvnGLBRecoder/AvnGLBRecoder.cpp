@@ -71,7 +71,7 @@ void RecodeGLB(const std::filesystem::path& glbPath, const std::filesystem::path
     std::cout << "Image count: " << document.images.Size() << ", texture count: " << document.textures.Size() << std::endl;
     std::cout << "Buffer count: " << document.buffers.Size() << ", Buffer views: " << document.bufferViews.Size() << std::endl;
 
-    GLBBufMapper bufMapper(glbResourceReader);
+    GLBBufMapper bufMapper(glbPath, glbResourceReader);
     bufMapper.LoadDocument(document);
     bufMapper.RecodeImages(document);
 

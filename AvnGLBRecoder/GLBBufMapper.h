@@ -42,7 +42,7 @@ private:
 
 class GLBBufMapper {
 public:
-	GLBBufMapper(const std::shared_ptr<GLBResourceReader>& glbReader);
+	GLBBufMapper(const std::filesystem::path& glbPath, const std::shared_ptr<GLBResourceReader>& glbReader);
 	~GLBBufMapper();
 
 	void LoadDocument(const Document& doc);
@@ -77,5 +77,7 @@ private:
 
 	void RecodeImage(const Document& doc, const Image& img, BufferViewInfo& bvi);
 
+	std::filesystem::path _originalGLB;
+	std::filesystem::path _imgFolder;
 };
 

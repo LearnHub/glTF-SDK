@@ -117,7 +117,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)GLTFSDK\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)GLTFSDK\Inc;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="AvnGLBRecoder.cpp" />
     <ClCompile Include="GLBBufMapper.cpp" />
+    <ClCompile Include="jute.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GLTFSDK\GLTFSDK.vcxproj">
@@ -151,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLBBufMapper.h" />
+    <ClInclude Include="jute.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

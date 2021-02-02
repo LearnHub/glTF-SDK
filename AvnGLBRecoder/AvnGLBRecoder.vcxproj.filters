@@ -21,9 +21,15 @@
     <ClCompile Include="GLBBufMapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="jute.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLBBufMapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jute.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

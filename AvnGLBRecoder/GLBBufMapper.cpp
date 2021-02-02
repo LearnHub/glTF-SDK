@@ -6,9 +6,16 @@
 #include <GLTFSDK/Serialize.h>
 #include <GLTFSDK/GLBResourceWriter.h>
 
-GLBBufMapper::GLBBufMapper(const std::shared_ptr<GLBResourceReader>& glbReader) 
-	: _glbReader(glbReader) {
-	
+#include "jute.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
+GLBBufMapper::GLBBufMapper(const std::filesystem::path& glbPath, const std::shared_ptr<GLBResourceReader>& glbReader)
+	: _originalGLB(glbPath), _glbReader(glbReader) {
+	auto filename = _originalGLB.filename().native();
+
+
 }
 
 GLBBufMapper::~GLBBufMapper() {
@@ -38,7 +45,7 @@ void GLBBufMapper::LoadDocument(const Microsoft::glTF::Document& doc) {
 				throw std::runtime_error(ss.str());
 			}
 
-			std::cout << "BV #" << bv.id << " -> off:" << bv.byteOffset << ", len:" << bv.byteLength << std::endl;
+			//std::cout << "BV #" << bv.id << " -> off:" << bv.byteOffset << ", len:" << bv.byteLength << std::endl;
 
 			BufferViewInfo bvi;
 			bvi.bvId = i;
@@ -58,15 +65,20 @@ void GLBBufMapper::LoadDocument(const Microsoft::glTF::Document& doc) {
 		auto it = _bufOrder.begin();
 		while (it != _bufOrder.end()) {
 			auto& bvi = _bufferViews[*it];
-			std::cout << "BV #" << bvi.bvId << " -> off:" << bvi.offset << ", len:" << bvi.len << 
-				"    (off+len == " << bvi.offset+bvi.len << ")" << std::endl;
+			std::cout << "BV #" << bvi.bvId << " -> off:" << bvi.offset << ", len:" << bvi.len;
+			
 			if (it != _bufOrder.begin()) {
 				auto& bviPrev = _bufferViews[*(it - 1)];
 				auto next_offset = bviPrev.offset + bviPrev.len;
 				if (bvi.offset != next_offset) {
-					std::cout << "Gap of " << (bvi.offset - next_offset) << " bytes found -> calculated offset " << next_offset << std::endl;
+					if (0 == bvi.offset % 4) {
+						std::cout << " --- pad " << (bvi.offset - next_offset) << " bytes";
+					} else {
+						std::cout << "Gap of " << (bvi.offset - next_offset) << " bytes found -> calculated offset " << next_offset;
+					}
 				}
 			}
+			std::cout << std::endl;
 			it++;
 		}
 	} else {
@@ -95,9 +107,7 @@ void GLBBufMapper::RecodeImages(const Microsoft::glTF::Document& doc) {
 			RecodeImage(doc, img, bvi);
 		}
 	} else {
-		std::stringstream ss;
-		ss << "GLB contains " << doc.buffers.Size() << " buffers - only single buffer GLBs are supported at the moment";
-		throw std::runtime_error(ss.str());
+		throw std::runtime_error("No BufferViews found in the GLB");
 	}
 }
 
@@ -159,6 +169,8 @@ void GLBBufMapper::SaveNewGLB(Document& doc, std::filesystem::path glbNew) {
 	auto resWriter = std::make_unique<GLBResourceWriter>(std::move(streamWriter));
 	auto os = resWriter->GetBufferStream(GLB_BUFFER_ID);
 
+	uint8_t padBuf[4] = { 0,0,0,0 };
+
 	long offset_adjustment = 0;
 	auto it = _bufOrder.begin();
 	while (it != _bufOrder.end()) {
@@ -170,15 +182,22 @@ void GLBBufMapper::SaveNewGLB(Document& doc, std::filesystem::path glbNew) {
 			std::ifstream strmBasis(bvi.basisDataFile, std::ios::in | std::ios::binary);
 			if (strmBasis.is_open()) {
 				auto basisData = StreamUtils::ReadBinaryFull<char>(strmBasis);
-				 
 				StreamUtils::WriteBinary(*os, basisData.data(), basisData.size());
 				std::cout << "BV #" << bv.id << " - read " << basisData.size() << " bytes from re-encoded basis data - write_ptr=" << os->tellp() << std::endl;
 
 				bv.byteOffset += offset_adjustment;
 
+				uint32_t padLen = 0;
+				// If the byte-length of the re-encoded basis data is not a multiple of 4, then we need to pad at the end.
+				if (0 != (bvi.new_len % 4)) {
+					padLen = 4 - (bvi.new_len % 4);
+					std::cout << "Padding with " << padLen << " bytes" << std::endl;
+					StreamUtils::WriteBinary(*os, padBuf, padLen);
+				}
+
 				// Update the length of the buffer view.
 				bv.byteLength = bvi.new_len;
-				offset_adjustment += -((long)bvi.len - (long)bvi.new_len);
+				offset_adjustment += (-((long)bvi.len - (long)bvi.new_len)) + padLen;
 			}
 		} else {
 			auto bvData = _glbReader->ReadBinaryData<uint8_t>(doc, bv);
@@ -205,10 +224,61 @@ void GLBBufMapper::SaveNewGLB(Document& doc, std::filesystem::path glbNew) {
 		// Serialize the glTF Document into a JSON manifest
 		manifest = Serialize(doc, SerializeFlags::None);
 
-		auto texturesPos = manifest.find("\"textures\":");
+		//auto texturesPos = manifest.find("\"textures\":");
 		//"textures":[{"sampler":0,"source":0
-		std::cout << "Found [textures] entry at offset : " << texturesPos << std::endl;
-		manifest = manifest.insert(texturesPos + 35, ",\"extensions\":{\"MOZ_HUBS_texture_basis\":{\"source\":0}}");
+		//std::cout << "Found [textures] entry at offset : " << texturesPos << std::endl;
+		//manifest = manifest.insert(texturesPos + 35, ",\"extensions\":{\"MOZ_HUBS_texture_basis\":{\"source\":0}}");
+
+/* 		auto jsonDoc = jute::parser::parse(manifest);
+		jute::jValue& texturesList = jsonDoc["textures"];
+		std::cout << "Found " << texturesList.size() << " textures found in JSON doc" << std::endl;
+
+		for (int i = 0; i < texturesList.size(); i++) {
+			std::cout << "Texture #" << i << ": contains " << texturesList[i].size() << " elements" << std::endl;
+			std::cout << "String: " << texturesList[i].to_string() << std::endl;
+			auto jvExts = jute::jValue(jute::JOBJECT);
+			jute::jValue jvbasis(jute::JOBJECT);
+			jute::jValue jvSrc(jute::JNUMBER);
+			jvSrc.set_string(std::to_string(i));
+			jvbasis.add_property("source", jvSrc);
+			jvExts.add_property("MOZ_HUBS_texture_basis", jvbasis);
+
+			//jvExts.set_string(("{\"MOZ_HUBS_texture_basis\":{\"source\":0}}"));
+
+			texturesList[i].add_property("extensions", jvExts);
+			std::cout << "New Texture: " << texturesList[i].to_string() << std::endl;
+		}
+
+		manifest = jsonDoc.to_string();*/
+
+		rapidjson::Document jsonDoc;
+		jsonDoc.Parse(manifest.c_str());
+		auto texturesList = jsonDoc["textures"].GetArray();
+		std::cout << "Found " << texturesList.Size() << " textures found in JSON doc" << std::endl;
+
+		for (int i = 0; i < texturesList.Size(); i++) {
+			auto& texture = texturesList[i];
+			rapidjson::Value jvSrc;
+			jvSrc.SetString("PANTS!!");
+			
+			rapidjson::Value jvExts;
+			jvExts.SetString("MOZ_HUBS_texture_basis");
+			texture.AddMember(rapidjson::StringRef("MOZ_HUBS_texture_basis"), rapidjson::StringRef("PANTS"), jsonDoc.GetAllocator());
+
+			//std::cout << "Texture #" << i << ": contains " << texture.MemberCount() << " members" << std::endl;
+			/*auto itMember = texture.MemberBegin();
+			while (itMember != texture.MemberEnd()) {
+				std::cout << "Mem -> " << (*itMember).name.GetString() << " := " << (*itMember).value.GetString() << std::endl;
+				itMember++;
+			}*/
+
+			rapidjson::StringBuffer sbuf;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(sbuf);
+			texture.Accept(writer);
+			std::cout << "String: " << sbuf.GetString() << std::endl;
+		}
+
+		//manifest = jsonDoc.to_string();
 
 	} catch (const GLTFException& ex) {
 		std::stringstream ss;
