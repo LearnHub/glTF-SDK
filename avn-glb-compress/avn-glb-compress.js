@@ -8,7 +8,7 @@ const options = yargs
  .option("i", { alias: "input", describe: "GLB file to compress", type: "string", demandOption: true })
  .option("o", { alias: "output", describe: "Output GLB file", type: "string", demandOption: false })
  .option("c", { alias: "compression", describe: "Compression level - full/preview (default)", type: "string"})
- .option("r", { alias: "report", describe: "Generate report of resized files", demanOption: false})
+ .option("r", { alias: "report", describe: "Generate report of resized files", demandOption: false})
  .argv;
 
 let split_input = options.input.split(".")
