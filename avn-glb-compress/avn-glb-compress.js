@@ -229,3 +229,9 @@ function occurrences(string, subString, allowOverlapping) {
     }
     return n;
 }
+//remove temp folder
+process.chdir('../')
+const rimraf = require('rimraf');
+rimraf.sync(tmpFldr);
+
+
