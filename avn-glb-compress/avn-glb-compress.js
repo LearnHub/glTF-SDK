@@ -59,12 +59,7 @@ const processAllImages = async function(imgCount)  {
   	
   	  if (err) throw err;
   	})
-  	
-  //remove temp folder
-  //console.log("CHANGING DIR");
-  process.chdir('../')
-  const rimraf = require('rimraf');
-  rimraf.sync(tmpFldr);
+
   }
 
 }
@@ -238,3 +233,11 @@ function occurrences(string, subString, allowOverlapping) {
 }
 
 
+process.on('exit', function (){
+ //remove temp folder
+  //console.log("CHANGING DIR");
+  process.chdir('../')
+  const rimraf = require('rimraf');
+  rimraf.sync(tmpFldr);
+});
+ 
