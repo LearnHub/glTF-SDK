@@ -56,8 +56,10 @@ const processAllImages = async function(imgCount)  {
   if (resized_files && options.report) {
   	const fs = require('fs')
   	fs.writeFile('../'+ split_input[0] + '.txt', resized_files, (err) => {
+  	
   	  if (err) throw err;
   	})
+
   }
 
 }
@@ -250,3 +252,13 @@ function occurrences(string, subString, allowOverlapping) {
     }
     return n;
 }
+
+
+process.on('exit', function (){
+ //remove temp folder
+  //console.log("CHANGING DIR");
+  process.chdir('../')
+  const rimraf = require('rimraf');
+  rimraf.sync(tmpFldr);
+});
+ 
