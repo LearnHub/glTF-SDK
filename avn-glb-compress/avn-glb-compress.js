@@ -2,6 +2,7 @@
 
 const yargs = require("yargs");
 const fs = require("fs");
+const path = require("path")
 
 const options = yargs
  .usage("Usage: -i <input GLB> -o <output GLB> -c <full|preview>")
@@ -28,7 +29,6 @@ const processAllImages = async function(imgCount)  {
 	var files = fs.readdirSync('.');
 
   let n = 1;
-	//files.forEach(async (file) => {
 	for (const file of files) {
 		if (file.endsWith(".jpg") || file.endsWith(".jpeg") || file.endsWith(".png")) {
       console.log(`Processing Image (${n} of ${imgCount}) - "${file}"`);
@@ -62,13 +62,22 @@ const processAllImages = async function(imgCount)  {
 
 }
 if (options.compression === "full") {
-  console.log(`Processing GLB with FULL compression- ${options.input} -> ${options.output}`);
+  console.log(`Processing GLB with FULL compression - ${options.input} -> ${options.output}`);
 } else {	
-  console.log(`Processing GLB with PREVIEW compression- ${options.input} -> ${options.output}`);
+  console.log(`Processing GLB with PREVIEW compression - ${options.input} -> ${options.output}`);
 }
 
 let tmpFldr = "temp-" + options.input;
-if (!fs.existsSync(tmpFldr)) {
+if (fs.existsSync(tmpFldr)) {
+	var files = fs.readdirSync(tmpFldr);
+	if (0 < files.length) {
+		console.log(`Temporary folder - ${tmpFldr} - already exists, containing ${files.length} files`); 
+		
+		for (const file of files) {
+		  fs.unlinkSync(tmpFldr + path.sep + file);
+		}
+	}
+} else {
 	fs.mkdirSync(tmpFldr);
 }
 process.chdir(tmpFldr);
@@ -171,23 +180,36 @@ async function resizeImage (f, w, h) {
 async function processTexture(imgFile) {
 	return new Promise ((resolve, reject) => {
 		gm(imgFile).size(async function(err, imgSz) {
-			if ( (!isPowerOf2(imgSz.width)) || (!isPowerOf2(imgSz.height)) ) {
-				let newWidth = highestPowerOf2Below(imgSz.width);
-				let newHeight = highestPowerOf2Below(imgSz.height);
+			let newWidth = imgSz.width;
+			if ( (0 < imgSz.width) && (4 > imgSz.width) ) {
+				newWidth = 4
+			} else if (!isPowerOf2(imgSz.width)) {
+				newWidth = highestPowerOf2Below(imgSz.width);
+			}
 
-        let fileInfo = `"${imgFile}" - width: ${imgSz.width} => ${newWidth}, height: ${imgSz.height} => ${newHeight}`;
+			let newHeight = imgSz.height;
+			if ( (0 < imgSz.height) && (4 > imgSz.height) ) {
+				newHeight = 4
+			} else if (!isPowerOf2(imgSz.height)) {
+				newHeight = highestPowerOf2Below(imgSz.height);
+			}
+	
+			if ( (newWidth != imgSz.width) || (newHeight != imgSz.height) ) {
+				let fileInfo = `"${imgFile}" - width: ${imgSz.width} => ${newWidth}, height: ${imgSz.height} => ${newHeight}`;
 
 				console.log("MUST RESIZE Texture -- " + fileInfo);
 
-        rescaledImgArray.push(fileInfo);
+				rescaledImgArray.push(fileInfo);
 
 				await resizeImage(imgFile, newWidth, newHeight);
 			}
 
-      let basiscmd = `\.\./basisu -linear -mipmap -individual -file "${imgFile}"`
-      if (options.compression === "full") {
-		      basiscmd = `\.\./basisu -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
-      }
+			let basisBinary = "\.\." + path.sep + "basisu"	
+			let basiscmd = `${basisBinary} -linear -mipmap -individual -file "${imgFile}"`
+			if (options.compression === "full") {
+				basiscmd = `${basisBinary} -linear -mipmap -individual -max_endpoints 16128 -max_selectors 16128 -comp_level 5 -file "${imgFile}"`
+			}
+			
 			exec.execSync(basiscmd, {stdio: 'inherit'});
 
 			if(err) {
@@ -196,7 +218,6 @@ async function processTexture(imgFile) {
 			}
 			resolve(imgFile);
 		});
-
 	});
 }
 
